@@ -1,0 +1,38 @@
+<!-- create bootstrap form at the center to enter the url  -->
+<div class="container-fluid h-100">
+    <div class="row h-100 align-items-center">
+        <h1 class="display-4 my-5 text-center">
+            HackerRank Contest Leaderboard data scrapper
+        </h1>
+
+        <!-- show error  -->
+        <% if (error) { %>
+            <div class="alert col-md-6 mx-auto alert-danger" role="alert">
+                <%= error %>
+            </div>
+
+            <% } %>
+
+                <!-- show success  -->
+
+                <% if (message) { %>
+                    <div class="alert col-md-6 mx-auto alert-success" role="alert">
+                        <%= message %>
+                            <br />
+                            <br />
+                            <b><a href="http://localhost:8000/data.csv" download>Download File</a></b>
+                    </div>
+                    <% }%>
+
+                        <div class="col-md-6 offset-md-3 mt-5">
+
+                            <form action="/scrap/hackerrank-leaderboard" method="POST">
+                                <div class="form-group my-5">
+                                    <label for="url" class="my-2">Enter the url</label>
+                                    <input type="text" class="form-control" id="url" name="url"
+                                        placeholder="Enter the url">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Scrap</button>
+                            </form>
+                        </div>
+    </div>
