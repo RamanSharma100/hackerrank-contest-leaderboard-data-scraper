@@ -32,9 +32,20 @@ const scrapData = async (req, res) => {
   });
   const page = await browser.newPage();
   await page.goto(url);
+
+  await page.evaluate(() => {
+    const dialogLogin = document.querySelector(".hr-dialog");
+
+    if (dialogLogin) {
+      dialogLogin.remove();
+    }
+  });
+
   const data = [];
-  await page.click("#s2id_pagination-length .select2-choice", { delay: 1000 });
-  await page.type(".select2-input", "100", { delay: 1000 });
+  await page.click("#s2id_pagination-length .select2-choice", { delay: 100 });
+  await page.type(".select2-drop .select2-search .select2-input", "100", {
+    delay: 100,
+  });
   await page.keyboard.press("Enter", { delay: 1000 });
   await page.waitForTimeout(2000);
   const result = await page.evaluate(() => {
@@ -51,9 +62,6 @@ const scrapData = async (req, res) => {
           .split("/")
           .pop()
       : 0;
-    const thirdHeader = document
-      .querySelectorAll("header .span-flex-4 p")[1]
-      .textContent.trim();
     // totalPages.push(pages);
 
     const rows = document.querySelectorAll(".leaderboard-list-view");
@@ -66,7 +74,7 @@ const scrapData = async (req, res) => {
       dta.push(arr);
     });
 
-    return { dta, pages, thirdHeader };
+    return { dta, pages };
   });
 
   let pagePromise = (link) =>
@@ -106,7 +114,7 @@ const scrapData = async (req, res) => {
   }
 
   // write data in csv file
-  let csvContent = `Rank,Name,,Score,${result.thirdHeader}\n`;
+  let csvContent = `Rank,Name,,Score,Time/School\n`;
   data.forEach((rowArray) => {
     let row = rowArray.join(",");
     csvContent += row + "\n";
