@@ -26,23 +26,34 @@ const scrapData = async (req, res) => {
     });
   }
 
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+    headless: false,
+    args: ["--incognito"],
+  });
   const page = await browser.newPage();
   await page.goto(url);
   const data = [];
+  await page.click("#s2id_pagination-length .select2-choice", { delay: 1000 });
+  await page.type(".select2-input", "100", { delay: 1000 });
+  await page.keyboard.press("Enter", { delay: 1000 });
+  await page.waitForTimeout(2000);
   const result = await page.evaluate(() => {
     const dta = [];
-    const pages = document
-      .querySelector(".pagination")
-      .querySelectorAll("ul li a.backbone")
-      [
-        document
+    const pages = document.querySelector(".pagination")
+      ? document
           .querySelector(".pagination")
-          .querySelectorAll("ul li a.backbone").length - 1
-      ].getAttribute("href")
-      .split("/")
-      .pop();
-
+          ?.querySelectorAll("ul li a.backbone")
+          [
+            document
+              .querySelector(".pagination")
+              .querySelectorAll("ul li a.backbone").length - 1
+          ].getAttribute("href")
+          .split("/")
+          .pop()
+      : 0;
+    const thirdHeader = document
+      .querySelectorAll("header .span-flex-4 p")[1]
+      .textContent.trim();
     // totalPages.push(pages);
 
     const rows = document.querySelectorAll(".leaderboard-list-view");
@@ -55,7 +66,7 @@ const scrapData = async (req, res) => {
       dta.push(arr);
     });
 
-    return { dta, pages };
+    return { dta, pages, thirdHeader };
   });
 
   let pagePromise = (link) =>
@@ -83,15 +94,19 @@ const scrapData = async (req, res) => {
     });
   data.push(...result.dta);
 
-  for (let i = 2; i <= Number(result.pages); i++) {
-    let currentPageData = await pagePromise(url + "/" + i);
-    // scrapedData.push(currentPageData);
-    data.push(...currentPageData);
+  if (result.pages > 1) {
+    for (let i = 2; i <= Number(result.pages); i++) {
+      let currentPageData = await pagePromise(url + "/" + i);
+      // scrapedData.push(currentPageData);
+      data.push(...currentPageData);
+    }
+    await browser.close();
+  } else {
+    await browser.close();
   }
-  await browser.close();
 
   // write data in csv file
-  let csvContent = "Rank,Name,,Score,Time\n";
+  let csvContent = `Rank,Name,,Score,${result.thirdHeader}\n`;
   data.forEach((rowArray) => {
     let row = rowArray.join(",");
     csvContent += row + "\n";
